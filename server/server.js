@@ -65,45 +65,28 @@ app.post('/user/login', (req, res) => {
         User.findAll({raw:true,attributes:['firstName','lastName'],where:{firstName: userInfo.loginName,lastName: userInfo.password}}).then(users =>{
             console.log(users);
             if (users.length === 0) {
-                console.log('null');
-                trueAcc = 'fail';
-                console.log(trueAcc);
+                console.log('fail');
+                return res.status(500).json({
+                    error: {
+                        code: 1001,
+                        message: 'Login name and password are mismatched'
+                    }
+                });
             }else {
                 console.log('success!');
-                trueAcc = 'success';
-                console.log(trueAcc);
+                return res.json({
+                    error: {
+                        code: 0,
+                        message: 'Successful'
+                    },
+                    data: {
+                        loginName: 'abc',
+                        nickName: 'djklafal'
+                    }
+                });
             }
-            // if (users.length === 0) {
-            // console.log('null');
-            // trueAcc = 'null';  
-            // }else{
-            // console.log(users);
-            // trueAcc = 'success';
-            // }
         })
     })
-
-    if (trueAcc === 'success') {
-        console.log('not finish');
-        return res.json({
-            error: {
-                code: 0,
-                message: 'Successful'
-            },
-            data: {
-                loginName: 'abc',
-                nickName: 'djklafal'
-            }
-        });
-    }
-    console.log('not finish');
-    console.log(trueAcc);
-    return res.status(500).json({
-        error: {
-            code: 1001,
-            message: 'Login name and password are mismatched'
-        }
-    });
 });
 
 app.listen(4000, () => {
