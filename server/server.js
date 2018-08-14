@@ -24,7 +24,7 @@ app.post('/user/login', (req, res) => {
         });
     }
 
-    return res.status(520).json({
+    return res.status(500).json({
         error: {
             code: 1001,
             message: 'Login name and password are mismatched'
