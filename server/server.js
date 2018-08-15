@@ -5,7 +5,6 @@ const bodyParser = require('body-parser');
 const Sequelize = require('sequelize');
 var account = [];
 var password = [];
-var trueAcc = 'init';
 
 const app = express();
 const connection = new Sequelize('sequelize','root','samuel0123',{dialect: 'mysql'});
@@ -62,7 +61,9 @@ app.post('/user/login', (req, res) => {
     console.log(userInfo);
 
     connection.authenticate().then(() => {
-        User.findAll({raw:true,attributes:['firstName','lastName'],where:{firstName: userInfo.loginName,lastName: userInfo.password}}).then(users =>{
+        User
+        .findAll({raw:true,attributes:['firstName','lastName'],where:{firstName: userInfo.loginName,lastName: userInfo.password}})
+        .then(users =>{
             console.log(users);
             if (users.length === 0) {
                 console.log('fail');
@@ -88,6 +89,61 @@ app.post('/user/login', (req, res) => {
         })
     })
 });
+
+app.post('/user/signup/account', (req, res) =>{
+    const userAccount = req.body;
+    console.log(userAccount);
+
+    User.findAll({raw:true,attributes:['firstName'],where:{firstName: userAccount.account}})
+    .then(users =>{
+        if (users.length === 0) {
+            return res.json({
+                error: {
+                    code: 0,
+                    message: 'successful '
+                }
+            })
+        }else {
+            return res.status(498).json({
+                error: {
+                    code: 1001,
+                    message: 'account is exist'
+                }
+            })
+        }
+    })
+});
+
+app.post('/user/signup/password', (req, res) =>{
+    const userSignup = req.body;
+    console.log(userSignup);
+
+    connection.authenticate().then(() =>{
+        if (userSignup.password === userSignup.checkPassword) {
+            User.create({
+                firstName: userSignup.account,
+                lastName: userSignup.password
+            })
+            return res.json({
+                error: {
+                    code: 0,
+                    message: 'successful'
+                }
+            })
+        }else {
+            return res.status(499).json({
+                error: {
+                    code: 1001,
+                    message: 'password was not same as checkpassword'
+                }
+            })
+        }
+    })
+});
+
+app.post('/user/task/', (req, res) =>{
+    
+})
 
 app.listen(4000, () => {
     console.log('Server listened on 127.0.0.1:4000');
