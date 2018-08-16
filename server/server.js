@@ -3,8 +3,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const Sequelize = require('sequelize');
-var account = [];
-var password = [];
 
 const app = express();
 const connection = new Sequelize('sequelize','root','samuel0123',{dialect: 'mysql'});
@@ -20,10 +18,20 @@ const User = connection.define('user',{
     } 
 }); 
 
-const Task =connection.define('task',{
+const Task = connection.define('task',{
+    id:{
+        type: Sequelize.INTEGER,
+        primaryKey: true
+    },
     task_content:{
         type: Sequelize.STRING,
     }
+})
+
+const Done = connection.define('done',{
+    done_content:{
+        type: Sequelize.STRING,
+    }    
 })
 
 connection.authenticate()
@@ -33,33 +41,6 @@ connection.authenticate()
     .catch(err =>{
         console.log('fail');
     })
-
-// connection.authenticate().then(() => {
-//     User.findAll({raw:true,attributes:['firstName','lastName']}).then(users =>{
-//         console.log(users);
-//         account = users;
-//     })
-// })
-
-// connection.query("select firstName from users").then(select =>{
-//     account = select;
-//     // console.log(account);
-// })
-// connection.query("select lastName from users").then(select =>{
-//     password = select;
-//     //console.log(password);
-// })
-// account.forEach(function(e){
-//     if (e.firstName == userInfo.loginName) {
-//         console.log('find');
-//     }else {
-//         console.log(e);
-//         console.log('fail');
-//     }
-// })
-// connection.query("select firstName from users where firstName = 'a'").then(select =>{
-//     console.log(select);
-// })
 
 app.post('/user/login', (req, res) => {
     const userInfo = req.body;
@@ -147,7 +128,8 @@ app.post('/user/signup/password', (req, res) =>{
 });
 
 app.post('/user/task/todo', async (req, res) => {
-    const todo = await Task.findAll({raw:true,attributes:['id','task_content']})
+    const todo = await Task.findAll({raw:true,attributes:['id','content','status']})
+    console.log(todo);
 
     return res.json({
         data: todo
@@ -155,13 +137,54 @@ app.post('/user/task/todo', async (req, res) => {
 })
 
 app.post('/user/task/done', async (req, res) =>{
-    const done = await Task.findAll({raw:true,attributes:['id','task_content']})
+    const done = await Done.findAll({raw:true,attributes:['id','done_content']})
 
     return res.json({
         data: done
     })
 })
 
+app.post('/user/task/add', async (req, res) =>{
+    const taskAdd = req.body;
+    console.log(taskAdd);
+
+    Task.create({
+        task_content: taskAdd.taskAdd
+    })
+    const id = await Task.findAll({raw:true,attributes:['id'],where:{task_content: taskAdd.taskAdd}})
+
+    return res.json({
+        data:taskAdd.taskAdd,
+        id: id
+    })
+})
+
+app.post('/user/task/drop', async (req, res) =>{
+    const drop = req.body;
+    console.log(drop);
+
+
+})
+
 app.listen(4000, () => {
     console.log('Server listened on 127.0.0.1:4000');
 });
+
+// connection.authenticate().then(() => {
+//     User.findAll({raw:true,attributes:['firstName','lastName']}).then(users =>{
+//         console.log(users);
+//         account = users;
+//     })
+// })
+
+// account.forEach(function(e){
+//     if (e.firstName == userInfo.loginName) {
+//         console.log('find');
+//     }else {
+//         console.log(e);
+//         console.log('fail');
+//     }
+// })
+// connection.query("select firstName from users where firstName = 'a'").then(select =>{
+//     console.log(select);
+// })
