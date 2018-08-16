@@ -20,8 +20,13 @@ const User = connection.define('user',{
     } 
 }); 
 
-connection
-    .authenticate()
+const Task =connection.define('task',{
+    task_content:{
+        type: Sequelize.STRING,
+    }
+})
+
+connection.authenticate()
     .then(() => {
         console.log('connect');
     })
@@ -141,8 +146,20 @@ app.post('/user/signup/password', (req, res) =>{
     })
 });
 
-app.post('/user/task/', (req, res) =>{
-    
+app.post('/user/task/todo', async (req, res) => {
+    const todo = await Task.findAll({raw:true,attributes:['id','task_content']})
+
+    return res.json({
+        data: todo
+    })
+})
+
+app.post('/user/task/done', async (req, res) =>{
+    const done = await Task.findAll({raw:true,attributes:['id','task_content']})
+
+    return res.json({
+        data: done
+    })
 })
 
 app.listen(4000, () => {
