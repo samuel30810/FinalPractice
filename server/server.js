@@ -3,11 +3,25 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const Sequelize = require('sequelize');
+var session = require('express-session');
 
 const app = express();
 const connection = new Sequelize('sequelize','root','samuel0123',{dialect: 'mysql'});
 
 app.use(bodyParser.json());
+app.use(session({
+    secret: '123',
+    resave: true,
+    saveUninitialized: true,
+}))
+
+// const newId = Task.findAll({attributes:[[sequelize.fn('count',sequelize.col('hat'),'no_hats')]]})
+
+// connection.query("select * from users where firstName = 'a' and lastName = 'a'",
+// { type: Sequelize.QueryTypes.SELECT}).then(select =>{
+//     console.log(select);
+//     console.log(select.length);
+// })
 
 const User = connection.define('user',{ 
     firstName:{ 
@@ -21,18 +35,19 @@ const User = connection.define('user',{
 const Task = connection.define('task',{
     id:{
         type: Sequelize.INTEGER,
-        primaryKey: true
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true
     },
-    task_content:{
+    content:{
         type: Sequelize.STRING,
+    },
+    status:{
+        type: Sequelize.INTEGER
     }
 })
 
-const Done = connection.define('done',{
-    done_content:{
-        type: Sequelize.STRING,
-    }    
-})
+
 
 connection.authenticate()
     .then(() => {
@@ -61,15 +76,13 @@ app.post('/user/login', (req, res) => {
                 });
             }else {
                 console.log('success!');
+                req.session.login = userInfo.loginName;
+                console.log(req.session.login);
                 return res.json({
                     error: {
                         code: 0,
                         message: 'Successful'
                     },
-                    data: {
-                        loginName: 'abc',
-                        nickName: 'djklafal'
-                    }
                 });
             }
         })
@@ -128,6 +141,13 @@ app.post('/user/signup/password', (req, res) =>{
 });
 
 app.post('/user/task/todo', async (req, res) => {
+    console.log(req.session.login);
+    if (req.session.login === 'a') {
+        console.log('successsuccess');
+    }
+    else{
+        console.log('failfail');
+    }
     const todo = await Task.findAll({raw:true,attributes:['id','content','status']})
     console.log(todo);
 
@@ -136,34 +156,39 @@ app.post('/user/task/todo', async (req, res) => {
     })
 })
 
-app.post('/user/task/done', async (req, res) =>{
-    const done = await Done.findAll({raw:true,attributes:['id','done_content']})
-
-    return res.json({
-        data: done
-    })
-})
-
 app.post('/user/task/add', async (req, res) =>{
     const taskAdd = req.body;
-    console.log(taskAdd);
 
-    Task.create({
-        task_content: taskAdd.taskAdd
+    const create_item = await Task.create({
+        content: taskAdd.taskAdd,
+        status:1,
     })
-    const id = await Task.findAll({raw:true,attributes:['id'],where:{task_content: taskAdd.taskAdd}})
+
+    console.log(create_item);
 
     return res.json({
-        data:taskAdd.taskAdd,
-        id: id
+        content: create_item
     })
 })
 
-app.post('/user/task/drop', async (req, res) =>{
-    const drop = req.body;
-    console.log(drop);
-
-
+app.post('/user/task/move', async (req, res) =>{
+    const id = req.body;
+    var statusNum = 0;
+    const oldStatus = await Task.findAll({raw:true,attributes:['status'],where:{id:id.id}});//[{ status: 2}]
+    const content = await Task.findAll({raw:true,attributes:['id','content','status'],where:{id:id.id}});
+    oldStatus.forEach(e => {
+        console.log(e.status);
+        statusNum = e.status;
+    })
+    if (statusNum === 1) {
+        Task.update({status: 2},{'where':{'id':id.id}})
+    }else {
+        Task.update({status: 1},{'where':{'id':id.id}})
+    }
+    return res.json({
+        status: statusNum,
+        content: content,
+    })
 })
 
 app.listen(4000, () => {
