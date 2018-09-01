@@ -44,6 +44,9 @@ const Task = connection.define('task',{
     },
     status:{
         type: Sequelize.INTEGER
+    },
+    host:{
+        type: Sequelize.STRING
     }
 })
 
@@ -142,13 +145,7 @@ app.post('/user/signup/password', (req, res) =>{
 
 app.post('/user/task/todo', async (req, res) => {
     console.log(req.session.login);
-    if (req.session.login === 'a') {
-        console.log('successsuccess');
-    }
-    else{
-        console.log('failfail');
-    }
-    const todo = await Task.findAll({raw:true,attributes:['id','content','status']})
+    const todo = await Task.findAll({raw:true,attributes:['id','content','status'],where:{host:req.session.login}})
     console.log(todo);
 
     return res.json({
@@ -162,6 +159,7 @@ app.post('/user/task/add', async (req, res) =>{
     const create_item = await Task.create({
         content: taskAdd.taskAdd,
         status:1,
+        host: req.session.login,
     })
 
     console.log(create_item);
@@ -174,8 +172,8 @@ app.post('/user/task/add', async (req, res) =>{
 app.post('/user/task/move', async (req, res) =>{
     const id = req.body;
     var statusNum = 0;
-    const oldStatus = await Task.findAll({raw:true,attributes:['status'],where:{id:id.id}});//[{ status: 2}]
-    const content = await Task.findAll({raw:true,attributes:['id','content','status'],where:{id:id.id}});
+    const oldStatus = await Task.findAll({raw:true,attributes:['status'],where:{id:id.id},host:req.session.login});//[{ status: 2}]
+    const content = await Task.findAll({raw:true,attributes:['id','content','status'],where:{id:id.id,host:req.session.login}});
     oldStatus.forEach(e => {
         console.log(e.status);
         statusNum = e.status;
